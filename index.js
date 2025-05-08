@@ -109,14 +109,11 @@ function ChangesStream (options) {
 // Setup all the _changes query options
 //
 ChangesStream.prototype.preRequest = function () {
-  // We want to actually reform this every time in case something has changed
-  this.query = this._feedParams.reduce(function (acc, key) {
-    if (typeof this[key] !== 'undefined' && this[key] !== false) {
-      acc[key] = this[key];
-    }
-    return acc;
-  }.bind(this), JDUP(this.query_params));
-
+  // Only include since and any user-provided query_params
+  this.query = JDUP(this.query_params);
+  if (typeof this.since !== 'undefined' && this.since !== false) {
+    this.query.since = this.since;
+  }
   // Remove filter from query parameters since we have confirmed it as
   // a function
   if (this.clientFilter) {
@@ -143,7 +140,8 @@ ChangesStream.prototype.request = function () {
   opts.timeout = this.requestTimeout;
   opts.rejectUnauthorized = this.rejectUnauthorized;
   opts.headers = {
-    'accept': 'application/json'
+    'accept': 'application/json',
+    'npm-replication-opt-in': true
   };
   opts.agent = this.agent;
 
